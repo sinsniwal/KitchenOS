@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: mychef-postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      # We don't set POSTGRES_DB here so init.sql can do CREATE DATABASE mychef_db;
+    ports:
+      - "5432:5432"
+    volumes:
+      # Automatically run the init.sql script on startup
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mychef-app:
+    build: .
+    container_name: mychef-app
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_CONNECTION_STRING=postgresql://user:password@postgres:5432/mychef_db
+      - OPENAI_BASE_URL=http://host.docker.internal:11434/v1
+      - OPENAI_API_KEY=ollama
+      - SWIGGY_ACCESS_TOKEN=${SWIGGY_ACCESS_TOKEN:-}
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  mychef-web:
+    build: ./web
+    container_name: mychef-web
+    ports:
+      - "5050:5050"
+    environment:
+      - ADK_BASE_URL=http://mychef-app:8000
+      - POSTGRES_CONNECTION_STRING=postgresql://user:password@postgres:5432/mychef_db
+    depends_on:
+      - mychef-app
+      - postgres

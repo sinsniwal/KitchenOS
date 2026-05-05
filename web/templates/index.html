@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KitchenOS — The Autonomous Pantry</title>
+    <meta name="description" content="KitchenOS is a deterministic, event-driven orchestration layer for household food management.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0a0a0f;--bg2:#12121a;--card:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.06);--t1:#f0f0f5;--t2:#8a8a9a;--t3:#55556a;--acc:#6366f1;--accg:rgba(99,102,241,0.25);--grn:#22c55e;--grng:rgba(34,197,94,0.15);--amb:#f59e0b;--ambg:rgba(245,158,11,0.15);--red:#ef4444;--redg:rgba(239,68,68,0.12);--r:16px}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+        .ambient{position:fixed;inset:0;pointer-events:none;z-index:0}
+        .ambient::before{content:'';position:absolute;width:800px;height:800px;top:-200px;left:-100px;background:radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 70%);animation:fl 20s ease-in-out infinite}
+        .ambient::after{content:'';position:absolute;width:600px;height:600px;bottom:-150px;right:-100px;background:radial-gradient(circle,rgba(34,197,94,0.06) 0%,transparent 70%);animation:fl 25s ease-in-out infinite reverse}
+        @keyframes fl{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,-40px) scale(1.1)}66%{transform:translate(-30px,30px) scale(0.95)}}
+        nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 40px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(20px);background:rgba(10,10,15,0.7);border-bottom:1px solid var(--border)}
+        .logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700}
+        .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--acc),#a78bfa);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+        .nav-links{display:flex;gap:32px;list-style:none}
+        .nav-links a{color:var(--t2);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
+        .nav-links a:hover{color:var(--t1)}
+        .nav-cta{padding:9px 22px;background:var(--acc);color:white!important;border-radius:9px;font-weight:600;font-size:13px;text-decoration:none;transition:all .2s;box-shadow:0 0 20px var(--accg)}
+        .hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px}
+        .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;background:var(--card);border:1px solid var(--border);border-radius:99px;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:32px}
+        .hero-badge-dot{width:8px;height:8px;background:var(--grn);border-radius:50%;animation:pd 2s infinite}
+        @keyframes pd{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 6px rgba(34,197,94,0)}}
+        .hero h1{font-size:clamp(42px,6vw,72px);font-weight:900;line-height:1.05;letter-spacing:-2px;max-width:800px;margin-bottom:24px}
+        .hero h1 .gradient{background:linear-gradient(135deg,#6366f1,#a78bfa,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .hero p{font-size:18px;color:var(--t2);max-width:560px;line-height:1.7;margin-bottom:48px}
+        .hero-actions{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+        .btn-p{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;background:var(--acc);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .25s;box-shadow:0 4px 24px var(--accg)}
+        .btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 32px var(--accg)}
+        .btn-s{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;background:transparent;color:var(--t1);border:1px solid var(--border);border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;text-decoration:none;transition:all .25s}
+        .stats-bar{position:relative;z-index:1;display:flex;justify-content:center;gap:1px;margin:0 auto 80px;max-width:900px;background:var(--border);border-radius:var(--r);overflow:hidden}
+        .stat{flex:1;padding:32px 24px;background:var(--bg2);text-align:center}
+        .stat:first-child{border-radius:var(--r) 0 0 var(--r)}.stat:last-child{border-radius:0 var(--r) var(--r) 0}
+        .stat-value{font-size:32px;font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,#f0f0f5,#8a8a9a);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .stat-label{font-size:13px;color:var(--t3);margin-top:4px;font-weight:500}
+        .section{position:relative;z-index:1;padding:80px 24px}
+        .section-header{text-align:center;margin-bottom:64px}
+        .section-label{font-size:12px;font-weight:600;color:var(--acc);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
+        .section-title{font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-1px;max-width:600px;margin:0 auto}
+        .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;max-width:1100px;margin:0 auto}
+        .card{padding:32px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);transition:all .3s;position:relative;overflow:hidden}
+        .card:hover{border-color:rgba(99,102,241,0.2);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.3)}
+        .card h3{font-size:16px;font-weight:700;margin-bottom:8px}
+        .card p{font-size:14px;color:var(--t2);line-height:1.6}
+        .tag{display:inline-block;margin-top:16px;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace}
+        .card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:20px}
+        /* DB Tables */
+        .db-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:32px;flex-wrap:wrap}
+        .db-tab{padding:10px 20px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--t2);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+        .db-tab.active,.db-tab:hover{border-color:var(--acc);color:var(--acc);background:var(--accg)}
+        .db-table-wrap{max-width:1000px;margin:0 auto;overflow-x:auto}
+        table{width:100%;border-collapse:collapse;font-size:14px}
+        thead th{text-align:left;padding:12px 16px;color:var(--t3);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border)}
+        tbody td{padding:12px 16px;border-bottom:1px solid var(--border);color:var(--t2)}
+        tbody tr:hover td{color:var(--t1);background:rgba(255,255,255,0.02)}
+        .empty-row td{text-align:center;color:var(--t3);padding:32px;font-style:italic}
+        /* Workflow */
+        .workflow-steps{max-width:700px;margin:0 auto}
+        .step{display:flex;gap:24px;padding:28px 0;position:relative}
+        .step:not(:last-child)::after{content:'';position:absolute;left:23px;top:72px;bottom:0;width:1px;background:linear-gradient(180deg,var(--acc),transparent)}
+        .step-num{width:48px;height:48px;flex-shrink:0;border-radius:14px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:var(--acc)}
+        .step-content h4{font-size:16px;font-weight:700;margin-bottom:6px}
+        .step-content p{font-size:14px;color:var(--t2);line-height:1.6}
+        .cta-box{max-width:800px;margin:0 auto;padding:64px 48px;text-align:center;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(34,197,94,0.05));border:1px solid rgba(99,102,241,0.12);border-radius:24px}
+        .cta-box h2{font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:16px}
+        .cta-box p{font-size:16px;color:var(--t2);margin-bottom:32px;max-width:480px;margin-left:auto;margin-right:auto}
+        footer{position:relative;z-index:1;padding:40px;text-align:center;color:var(--t3);font-size:13px;border-top:1px solid var(--border)}
+        @media(max-width:640px){nav{padding:14px 20px}.nav-links{display:none}.stats-bar{flex-direction:column}.stat:first-child{border-radius:var(--r) var(--r) 0 0}.stat:last-child{border-radius:0 0 var(--r) var(--r)}}
+    </style>
+</head>
+<body>
+<div class="ambient"></div>
+<nav>
+    <div class="logo"><div class="logo-icon">🥘</div><span>KitchenOS</span></div>
+    <ul class="nav-links">
+        <li><a href="#agents">Agents</a></li>
+        <li><a href="#database">Database</a></li>
+        <li><a href="#workflow">Protocol</a></li>
+    </ul>
+    <a href="/chat" class="nav-cta">Open Chat →</a>
+</nav>
+
+<section class="hero">
+    <div class="hero-badge"><div class="hero-badge-dot"></div>ADK v2.0 · Multi-Agent Orchestration</div>
+    <h1>Your Kitchen,<br><span class="gradient">Autonomously Managed.</span></h1>
+    <p>KitchenOS eliminates cognitive load by treating your kitchen as a managed inventory system. One command. Five agents. Zero friction.</p>
+    <div class="hero-actions">
+        <a href="/chat" class="btn-p">💬 Talk to Chef</a>
+        <a href="#agents" class="btn-s">See How It Works</a>
+    </div>
+</section>
+
+<div class="stats-bar">
+    <div class="stat"><div class="stat-value" id="pantry-count">—</div><div class="stat-label">Pantry Items</div></div>
+    <div class="stat"><div class="stat-value" id="family-count">—</div><div class="stat-label">Family Members</div></div>
+    <div class="stat"><div class="stat-value">5</div><div class="stat-label">Active Agents</div></div>
+    <div class="stat"><div class="stat-value">3</div><div class="stat-label">MCP Integrations</div></div>
+</div>
+
+<!-- Agents -->
+<section class="section" id="agents">
+    <div class="section-header">
+        <div class="section-label">The Agents</div>
+        <h2 class="section-title">Five Agents, One Unified Kitchen</h2>
+    </div>
+    <div class="grid">
+        <div class="card"><div class="card-icon" style="background:var(--accg);color:var(--acc)">👨‍🍳</div><h3>Chef</h3><p>The coordinator. Delegates tasks, collects results, and talks to you.</p><span class="tag" style="background:var(--accg);color:var(--acc)">ORCHESTRATOR</span></div>
+        <div class="card"><div class="card-icon" style="background:var(--grng);color:var(--grn)">🥗</div><h3>Diet</h3><p>Fetches dietary profiles and allergies from the database. Sets nutritional targets.</p><span class="tag" style="background:var(--grng);color:var(--grn)">READ-ONLY · POSTGRES</span></div>
+        <div class="card"><div class="card-icon" style="background:var(--ambg);color:var(--amb)">🍳</div><h3>Recipe</h3><p>Searches Spoonacular for recipes matching your constraints and finds missing items.</p><span class="tag" style="background:var(--ambg);color:var(--amb)">SPOONACULAR</span></div>
+        <div class="card"><div class="card-icon" style="background:var(--redg);color:var(--red)">🛒</div><h3>Shopper</h3><p>Prices and orders items via Swiggy Instamart. Two-phase: price first, then buy.</p><span class="tag" style="background:var(--redg);color:var(--red)">SWIGGY MCP</span></div>
+        <div class="card"><div class="card-icon" style="background:rgba(168,139,250,0.15);color:#a78bfa">💰</div><h3>Budget</h3><p>Calculates how much you save by cooking at home vs ordering delivery.</p><span class="tag" style="background:rgba(168,139,250,0.15);color:#a78bfa">SAVINGS</span></div>
+    </div>
+</section>
+
+<!-- Database -->
+<section class="section" id="database">
+    <div class="section-header">
+        <div class="section-label">Live Database</div>
+        <h2 class="section-title">Your Kitchen Data</h2>
+    </div>
+    <div class="db-tabs" id="db-tabs">
+        <div class="db-tab active" data-tab="pantry">📦 Pantry</div>
+        <div class="db-tab" data-tab="family">👨‍👩‍👧 Family</div>
+        <div class="db-tab" data-tab="schema">🗂️ Schema</div>
+    </div>
+    <div class="db-table-wrap">
+        <table id="db-table"><thead><tr><td>Loading…</td></tr></thead></table>
+    </div>
+</section>
+
+<!-- Workflow -->
+<section class="section" id="workflow">
+    <div class="section-header">
+        <div class="section-label">Family Dinner Protocol</div>
+        <h2 class="section-title">From Request to Dinner in 6 Steps</h2>
+    </div>
+    <div class="workflow-steps">
+        <div class="step"><div class="step-num">1</div><div class="step-content"><h4>"Dinner for the family tonight"</h4><p>Chef receives your request and kicks off the pipeline.</p></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-content"><h4>Diet fetches profiles</h4><p>Queries the database for family preferences, allergies, and nutritional targets.</p></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-content"><h4>Recipe finds meals & gaps</h4><p>Searches Spoonacular for matching recipes and identifies missing ingredients.</p></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-content"><h4>Shopper prices on Swiggy</h4><p>Checks Instamart availability and pricing for the missing items.</p></div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-content"><h4>Budget calculates savings</h4><p>Computes how much you save by cooking at home vs ordering delivery.</p></div></div>
+        <div class="step"><div class="step-num">6</div><div class="step-content"><h4>You approve → order executes</h4><p>"Missing 2 items. Savings: ₹450. Order?" — Only after your "Yes" does the cart execute.</p></div></div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="cta-box">
+        <h2>Ready to talk to your kitchen?</h2>
+        <p>Open the chat and let the agents handle dinner tonight.</p>
+        <a href="/chat" class="btn-p" style="font-size:16px;padding:16px 40px">💬 Open Chat</a>
+    </div>
+</section>
+<footer><p>KitchenOS v2.0 · Google ADK · Swiggy MCP · Spoonacular MCP · PostgreSQL</p></footer>
+
+<script>
+let currentTab = 'pantry';
+const tableEl = document.getElementById('db-table');
+
+function renderTable(headers, rows) {
+    let html = '<thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+    if (!rows.length) html += '<tr class="empty-row"><td colspan="' + headers.length + '">No data</td></tr>';
+    else rows.forEach(r => { html += '<tr>' + r.map(c => `<td>${c ?? '—'}</td>`).join('') + '</tr>'; });
+    html += '</tbody>';
+    tableEl.innerHTML = html;
+}
+
+async function loadTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.db-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    try {
+        if (tab === 'pantry') {
+            const data = await (await fetch('/api/pantry')).json();
+            if (data.error) throw data.error;
+            document.getElementById('pantry-count').textContent = data.length;
+            const daysLeft = d => { if (!d) return '—'; const diff = Math.ceil((new Date(d) - new Date()) / 86400000); return diff <= 3 ? `⚠️ ${diff}d` : diff <= 7 ? `🟡 ${diff}d` : `${diff}d`; };
+            renderTable(['Item', 'Qty', 'Unit', 'Purchased', 'Expires'], data.map(i => [i.name, i.quantity, i.unit, i.purchased || '—', daysLeft(i.expiry)]));
+        } else if (tab === 'family') {
+            const data = await (await fetch('/api/family')).json();
+            if (data.error) throw data.error;
+            document.getElementById('family-count').textContent = data.length;
+            const rows = [];
+            data.forEach(m => { if (!m.traits.length) rows.push([m.name, m.relationship, '—', '—']); else m.traits.forEach((t,i) => rows.push([i===0?m.name:'', i===0?m.relationship:'', t.type, t.value])); });
+            renderTable(['Name', 'Relationship', 'Trait', 'Value'], rows);
+        } else if (tab === 'schema') {
+            const data = await (await fetch('/api/schema')).json();
+            if (data.error) throw data.error;
+            const rows = [];
+            Object.entries(data).forEach(([tbl, cols]) => cols.forEach((c,i) => rows.push([i===0?tbl:'', c.column, c.type, c.nullable?'✓':'✗'])));
+            renderTable(['Table', 'Column', 'Type', 'Nullable'], rows);
+        }
+    } catch(e) { renderTable(['Error'], [[String(e)]]); }
+}
+
+document.querySelectorAll('.db-tab').forEach(t => t.addEventListener('click', () => loadTab(t.dataset.tab)));
+loadTab('pantry');
+</script>
+</body>
+</html>

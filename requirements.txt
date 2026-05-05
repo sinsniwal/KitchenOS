@@ -1,0 +1,6 @@
+google-adk[litellm]
+python-dotenv
+litellm
+pytest
+pytest-asyncio
+psycopg2-binary
