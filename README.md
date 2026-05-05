@@ -1,4 +1,4 @@
-# KitchenOS v2.0: The Autonomous Pantry 🥘
+# KitchenOS v2.0: The Autonomous Pantry
 
 KitchenOS is a multi-agent system that manages your kitchen — from dietary profiles and recipe search to grocery procurement and savings calculation. Built on Google ADK, it uses five specialized agents to handle the full pipeline from "what's for dinner?" to "items ordered."
 
@@ -188,6 +188,8 @@ PYTHONPATH=. .venv/bin/pytest tests/ -v
 ---
 
 ## Architecture
+
+>  **[Full Pipeline Architecture →](pipeline_architecture.md)** — User types, user stories, API endpoints, UML class diagrams, sequence diagrams, routing logic, infrastructure topology, safety guardrails, and testing matrix.
 
 ### The Agents
 
