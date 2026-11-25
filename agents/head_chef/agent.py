@@ -7,6 +7,14 @@ from google.adk.agents.llm_agent import Agent
 from google.adk.tools.mcp_tool.mcp_toolset import McpToolset, StdioConnectionParams, StreamableHTTPConnectionParams
 from mcp.client.stdio import StdioServerParameters
 
+from google.adk.flows.llm_flows import functions
+original_get_tool = functions._get_tool
+def patched_get_tool(function_call, tools_dict):
+    if hasattr(function_call, 'name') and function_call.name.startswith("functions/"):
+        function_call.name = function_call.name.replace("functions/", "", 1)
+    return original_get_tool(function_call, tools_dict)
+functions._get_tool = patched_get_tool
+
 try:
     from head_chef.prompts import (
         DIET_INSTRUCTION, SHOPPER_INSTRUCTION,
@@ -21,7 +29,7 @@ except ModuleNotFoundError:
 load_dotenv()
 
 # Load keys from environment
-spoonacular_api_key = os.getenv("spoonacular_api_key")
+spoonacular_api_key = os.getenv("SPOONACULAR_API_KEY")
 postgres_connection_string = os.getenv("POSTGRES_CONNECTION_STRING", "postgresql://user:password@postgres:5432/mychef_db")
 swiggy_access_token = os.getenv("SWIGGY_ACCESS_TOKEN", "")
 
@@ -47,7 +55,7 @@ def _build_env(**extra):
 # Setup Spoonacular MCP connection
 spoonacular_params = StdioServerParameters(
     command=_npx_path,
-    args=["-y", "spoonacular-mcp"],
+    args=["spoonacular-mcp"],
     env=_build_env(SPOONACULAR_API_KEY=spoonacular_api_key or "")
 )
 spoonacular_toolset = McpToolset(connection_params=StdioConnectionParams(server_params=spoonacular_params))
@@ -55,7 +63,7 @@ spoonacular_toolset = McpToolset(connection_params=StdioConnectionParams(server_
 # Setup PostgreSQL MCP connection
 postgres_params = StdioServerParameters(
     command=_npx_path,
-    args=["-y", "mcp-postgres"],
+    args=["mcp-postgres"],
     env=_build_env(DATABASE_URL=postgres_connection_string)
 )
 postgres_toolset = McpToolset(connection_params=StdioConnectionParams(server_params=postgres_params))
@@ -82,13 +90,18 @@ swiggy_dineout_params = StreamableHTTPConnectionParams(
 swiggy_dineout_toolset = McpToolset(connection_params=swiggy_dineout_params)
 
 
-model_name = "openai/gpt-oss:120b-cloud"
+import sys
+# Add root path to sys.path so we can import llm_config
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from llm_config import MODEL_NAME
+
+model_name = MODEL_NAME
 
 # Worker 1: Diet Manager
 diet = Agent(
     model=model_name,
     name='Diet',
-    description="Fetches family dietary profiles, allergies, and pantry data from the database (Read-Only).",
+    description="Fetches family dietary profiles, allergies, and pantry data from the database. READ-ONLY access. Use this agent when you need to know what the family eats, their allergies, and what is currently in the pantry.",
     instruction=DIET_INSTRUCTION,
     tools=[postgres_toolset, spoonacular_toolset],
 )
@@ -97,25 +110,29 @@ diet = Agent(
 recipe = Agent(
     model=model_name,
     name='Recipe',
-    description="Finds recipes from Spoonacular and calculates missing ingredient gaps.",
+    description="Finds recipes from Spoonacular API and calculates missing ingredient gaps vs the pantry. Use this agent after you have dietary profiles and pantry data from Diet.",
     instruction=RECIPE_INSTRUCTION,
     tools=[spoonacular_toolset, postgres_toolset],
 )
+
+shopper_tools = [postgres_toolset]
+if swiggy_access_token:
+    shopper_tools.extend([swiggy_im_toolset, swiggy_food_toolset, swiggy_dineout_toolset])
 
 # Worker 3: Shopper
 shopper = Agent(
     model=model_name,
     name='Shopper',
-    description="Handles Swiggy procurement — prices items and executes orders.",
+    description="Prices and orders items on Swiggy Instamart, searches restaurants on Swiggy Food/Dineout, and writes to the Postgres pantry ledger. Use this agent when you need real prices or need to place an order.",
     instruction=SHOPPER_INSTRUCTION,
-    tools=[postgres_toolset, swiggy_im_toolset, swiggy_food_toolset, swiggy_dineout_toolset],
+    tools=shopper_tools,
 )
 
 # Worker 4: Budget Calculator
 budget = Agent(
     model=model_name,
     name='Budget',
-    description="Calculates savings and financial comparisons.",
+    description="Calculates financial savings of cooking at home vs ordering delivery. No tools needed — pure calculation. Use this agent after you have Swiggy prices from Shopper.",
     instruction=BUDGET_INSTRUCTION,
     tools=[],
 )

@@ -7,3 +7,10 @@ __pycache__/
 swiggy_url.txt
 myplan.md
 plan/*
+
+.DS_Store
+.env
+*.env
+venv/
+.venv/
+

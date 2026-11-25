@@ -24,8 +24,8 @@ services:
       - "8000:8000"
     environment:
       - POSTGRES_CONNECTION_STRING=postgresql://user:password@postgres:5432/mychef_db
-      - OPENAI_BASE_URL=http://host.docker.internal:11434/v1
-      - OPENAI_API_KEY=ollama
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - SWIGGY_ACCESS_TOKEN=${SWIGGY_ACCESS_TOKEN:-}
     env_file:
       - .env
@@ -41,6 +41,10 @@ services:
     environment:
       - ADK_BASE_URL=http://mychef-app:8000
       - POSTGRES_CONNECTION_STRING=postgresql://user:password@postgres:5432/mychef_db
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    env_file:
+      - .env
     depends_on:
       - mychef-app
       - postgres

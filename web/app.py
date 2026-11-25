@@ -2,10 +2,19 @@
 KitchenOS Web UI — Flask server.
 Serves the landing page and proxies chat messages to the ADK backend (port 8000).
 """
+
 import os
 import json
 import requests
-from flask import Flask, render_template, request, jsonify, Response, stream_with_context
+from flask import (
+    Flask,
+    render_template,
+    request,
+    jsonify,
+    Response,
+    stream_with_context,
+)
+import litellm
 
 app = Flask(__name__)
 
@@ -17,6 +26,7 @@ DEFAULT_USER = "user"
 def _pg_conn():
     """Return a fresh Postgres connection."""
     import psycopg2
+
     conn_str = os.getenv(
         "POSTGRES_CONNECTION_STRING",
         "postgresql://user:password@localhost:5432/mychef_db",
@@ -139,7 +149,12 @@ def get_family():
         members = {}
         for mid, name, rel, trait, val in rows:
             if mid not in members:
-                members[mid] = {"id": mid, "name": name, "relationship": rel, "traits": []}
+                members[mid] = {
+                    "id": mid,
+                    "name": name,
+                    "relationship": rel,
+                    "traits": [],
+                }
             if trait and val:
                 members[mid]["traits"].append({"type": trait, "value": val})
 
@@ -154,12 +169,14 @@ def get_schema():
     try:
         conn = _pg_conn()
         cur = conn.cursor()
-        cur.execute("""
+        cur.execute(
+            """
             SELECT table_name, column_name, data_type, is_nullable
             FROM information_schema.columns
             WHERE table_schema = 'public'
             ORDER BY table_name, ordinal_position
-        """)
+        """
+        )
         rows = cur.fetchall()
         cur.close()
         conn.close()
@@ -168,13 +185,124 @@ def get_schema():
         for tbl, col, dtype, nullable in rows:
             if tbl not in tables:
                 tables[tbl] = []
-            tables[tbl].append({
-                "column": col,
-                "type": dtype,
-                "nullable": nullable == "YES",
-            })
+            tables[tbl].append(
+                {
+                    "column": col,
+                    "type": dtype,
+                    "nullable": nullable == "YES",
+                }
+            )
 
         return jsonify(tables)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/profile/parse", methods=["POST"])
+def parse_profile():
+    """Use LiteLLM to extract structured family profiles from natural text."""
+    body = request.json
+    text = body.get("text", "")
+
+    prompt = f"""
+    You are an exact JSON extractor. Extract family members, their relationships, diets, and allergies from the text.
+    Return ONLY valid JSON matching this schema:
+    {{"members": [{{"name": "str", "relationship": "self|spouse|child|etc", "diets": ["str"], "allergies": ["str"]}}]}}
+    
+    Text: {text}
+    """
+
+    try:
+        response = litellm.completion(
+            model=MODEL_NAME,
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"},
+        )
+        content = response.choices[0].message.content
+        return jsonify(json.loads(content))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/profile/save", methods=["POST"])
+def save_profile():
+    """Save the extracted profile JSON to the PostgreSQL database."""
+    body = request.json
+    members = body.get("members", [])
+
+    try:
+        conn = _pg_conn()
+        cur = conn.cursor()
+
+        for m in members:
+            # Upsert family member (simplified insert, in reality might check for existence)
+            cur.execute(
+                "INSERT INTO family_members (name, relationship) VALUES (%s, %s) RETURNING id",
+                (m.get("name"), m.get("relationship", "member")),
+            )
+            member_id = cur.fetchone()[0]
+
+            # Insert diets
+            for diet in m.get("diets", []):
+                cur.execute(
+                    "INSERT INTO dietary_profiles (member_id, trait_type, value) VALUES (%s, 'diet', %s)",
+                    (member_id, diet),
+                )
+
+            # Insert allergies
+            for allergy in m.get("allergies", []):
+                cur.execute(
+                    "INSERT INTO dietary_profiles (member_id, trait_type, value) VALUES (%s, 'allergy', %s)",
+                    (member_id, allergy),
+                )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/pantry/parse_and_save", methods=["POST"])
+def parse_and_save_pantry():
+    """Use LiteLLM to extract pantry items from natural text and save to DB."""
+    body = request.json
+    text = body.get("text", "")
+
+    prompt = f"""
+    You are an exact JSON extractor. Extract pantry inventory from the text.
+    Return ONLY valid JSON matching this schema:
+    {{"items": [{{"item_name": "str", "quantity": float, "unit": "str"}}]}}
+    Default unit to 'unit' if not specified.
+    
+    Text: {text}
+    """
+
+    try:
+        # LLM Parse
+        response = litellm.completion(
+            model=MODEL_NAME,
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"},
+        )
+        content = response.choices[0].message.content
+        data = json.loads(content)
+        items = data.get("items", [])
+
+        # Save to DB
+        conn = _pg_conn()
+        cur = conn.cursor()
+        for i in items:
+            cur.execute(
+                "INSERT INTO pantry (item_name, quantity, unit) VALUES (%s, %s, %s)",
+                (i.get("item_name"), i.get("quantity", 1), i.get("unit", "unit")),
+            )
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({"status": "success", "parsed_items": items})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

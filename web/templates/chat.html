@@ -4,94 +4,233 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KitchenOS — Chat</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root{--bg:#0a0a0f;--bg2:#12121a;--card:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.06);--t1:#f0f0f5;--t2:#8a8a9a;--t3:#55556a;--acc:#6366f1;--accg:rgba(99,102,241,0.25);--grn:#22c55e;--red:#ef4444}
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);height:100vh;display:flex;-webkit-font-smoothing:antialiased}
-        /* Sidebar */
-        .sidebar{width:260px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 16px}
-        .sidebar-logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700;padding:0 8px;margin-bottom:32px}
-        .sidebar-logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--acc),#a78bfa);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
-        .sidebar-section{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;padding:0 8px;margin-bottom:12px}
-        .sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:14px;font-weight:500;color:var(--t2);cursor:pointer;transition:all .15s;text-decoration:none}
-        .sidebar-item:hover{background:var(--card);color:var(--t1)}
-        .sidebar-item.active{background:var(--accg);color:var(--acc)}
-        .sidebar-spacer{flex:1}
-        .sidebar-status{padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:12px}
-        .status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px}
-        .status-dot.online{background:var(--grn);box-shadow:0 0 6px rgba(34,197,94,0.5)}
-        .status-dot.offline{background:var(--red)}
-        /* Main */
-        .chat-main{flex:1;display:flex;flex-direction:column;min-width:0}
-        .chat-header{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-        .chat-header-left{display:flex;align-items:center;gap:12px}
-        .chat-avatar{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--acc),#a78bfa);display:flex;align-items:center;justify-content:center;font-size:18px}
-        .chat-header-info h2{font-size:15px;font-weight:700}
-        .chat-header-info p{font-size:12px;color:var(--t3)}
-        .header-btn{padding:8px 16px;background:var(--card);border:1px solid var(--border);border-radius:9px;color:var(--t2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
-        .header-btn:hover{background:rgba(255,255,255,0.06);color:var(--t1)}
+        :root {
+            --bg: #050505;
+            --bg-glass: rgba(15, 15, 20, 0.65);
+            --bg-glass-hover: rgba(25, 25, 30, 0.85);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-light: rgba(255, 255, 255, 0.15);
+            --t1: #ffffff;
+            --t2: #a0a0ab;
+            --t3: #6e6e7a;
+            --acc: #818cf8;
+            --acc-glow: rgba(129, 140, 248, 0.3);
+            --acc-grad: linear-gradient(135deg, #818cf8, #c084fc);
+            --swiggy: #fc8019;
+            --grn: #10b981;
+            --red: #ef4444;
+            --blur: blur(20px);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--t1); height: 100vh; overflow: hidden; display: flex; -webkit-font-smoothing: antialiased; }
+        
+        /* Background decorative blobs */
+        .bg-blob { position: absolute; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.4; }
+        .bg-blob.b1 { top: -10%; left: -5%; width: 400px; height: 400px; background: rgba(129, 140, 248, 0.3); }
+        .bg-blob.b2 { bottom: -10%; right: -5%; width: 500px; height: 500px; background: rgba(192, 132, 252, 0.2); }
+
+        /* Left Sidebar */
+        .sidebar { width: 260px; flex-shrink: 0; background: var(--bg-glass); backdrop-filter: var(--blur); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 16px; z-index: 10; }
+        .sidebar-logo { display: flex; align-items: center; gap: 12px; font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; padding: 0 8px; margin-bottom: 40px; letter-spacing: -0.5px; }
+        .sidebar-logo-icon { width: 36px; height: 36px; background: var(--acc-grad); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 12px var(--acc-glow); }
+        .sidebar-section { font-size: 11px; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: 1.5px; padding: 0 8px; margin-bottom: 12px; }
+        .sidebar-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 500; color: var(--t2); cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); text-decoration: none; margin-bottom: 4px; border: 1px solid transparent; }
+        .sidebar-item:hover { background: var(--bg-glass-hover); color: var(--t1); transform: translateX(4px); }
+        .sidebar-item.active { background: rgba(129, 140, 248, 0.1); color: var(--acc); border: 1px solid rgba(129, 140, 248, 0.2); }
+        .sidebar-spacer { flex: 1; }
+        
+        .sidebar-status { padding: 14px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 14px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .status-dot.online { background: var(--grn); box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); }
+        .status-dot.offline { background: var(--red); box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
+
+        /* Main Chat Area */
+        .chat-main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; z-index: 5; }
+        .chat-header { padding: 20px 32px; background: rgba(5,5,5,0.4); backdrop-filter: var(--blur); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; z-index: 10; }
+        .chat-header-left { display: flex; align-items: center; gap: 16px; }
+        .chat-avatar { width: 44px; height: 44px; border-radius: 14px; background: var(--acc-grad); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 12px var(--acc-glow); }
+        .chat-header-info h2 { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 600; margin-bottom: 2px; }
+        .chat-header-info p { font-size: 13px; color: var(--t2); font-family: 'JetBrains Mono', monospace; }
+        .header-btn { padding: 10px 20px; background: transparent; border: 1px solid var(--border-light); border-radius: 10px; color: var(--t1); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; backdrop-filter: var(--blur); }
+        .header-btn:hover { background: var(--border); transform: translateY(-1px); }
+
         /* Messages */
-        .chat-messages{flex:1;overflow-y:auto;padding:28px;display:flex;flex-direction:column;gap:20px}
-        .chat-messages::-webkit-scrollbar{width:4px}
-        .chat-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-        .message{max-width:720px;animation:mi .3s ease-out}
-        @keyframes mi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        .message.user{align-self:flex-end}
-        .message.assistant{align-self:flex-start}
-        .msg-bubble{padding:14px 18px;border-radius:16px;font-size:14px;line-height:1.65;white-space:pre-wrap;word-break:break-word}
-        .message.user .msg-bubble{background:var(--acc);color:white;border-bottom-right-radius:4px}
-        .message.assistant .msg-bubble{background:var(--card);border:1px solid var(--border);color:var(--t1);border-bottom-left-radius:4px}
+        .chat-messages { flex: 1; overflow-y: auto; padding: 32px; display: flex; flex-direction: column; gap: 24px; scroll-behavior: smooth; }
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 6px; }
+        
+        .message { max-width: 800px; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .message.user { align-self: flex-end; align-items: flex-end; }
+        .message.assistant { align-self: flex-start; align-items: flex-start; }
+        
+        .msg-bubble { padding: 16px 20px; border-radius: 20px; font-size: 15px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+        .message.user .msg-bubble { background: var(--acc-grad); color: white; border-bottom-right-radius: 6px; box-shadow: 0 4px 16px var(--acc-glow); }
+        .message.assistant .msg-bubble { background: var(--bg-glass); border: 1px solid var(--border-light); color: var(--t1); border-bottom-left-radius: 6px; backdrop-filter: var(--blur); box-shadow: 0 4px 24px rgba(0,0,0,0.2); }
+
+        /* Custom Cards & Interactive Forms */
+        .card-container { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; width: 100%; }
+        
+        .recipe-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); border-radius: 16px; overflow: hidden; width: 340px; display: flex; flex-direction: column; transition: transform 0.2s; box-shadow: 0 8px 32px rgba(0,0,0,0.3); backdrop-filter: blur(10px); }
+        .recipe-card:hover { transform: translateY(-4px); border-color: rgba(129, 140, 248, 0.4); }
+        .recipe-img { width: 100%; height: 160px; object-fit: cover; background: #222; }
+        .recipe-content { padding: 20px; }
+        .recipe-title { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #fff; }
+        .recipe-meta { font-size: 13px; color: var(--acc); font-weight: 500; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+        .recipe-ing-list { list-style: none; margin-bottom: 16px; }
+        .recipe-ing-list li { font-size: 13px; color: var(--t2); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+        .recipe-ing-list li::before { content: "•"; color: var(--acc); }
+        .recipe-missing { margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .recipe-missing-title { font-size: 12px; color: var(--red); font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .swiggy-card { background: linear-gradient(180deg, rgba(252, 128, 25, 0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(252, 128, 25, 0.3); border-radius: 16px; width: 340px; padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); backdrop-filter: blur(10px); }
+        .swiggy-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .swiggy-logo { width: 28px; height: 28px; background: var(--swiggy); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; }
+        .swiggy-title { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 600; color: #fff; }
+        .swiggy-items { list-style: none; margin-bottom: 16px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 0; }
+        .swiggy-item { display: flex; justify-content: space-between; font-size: 14px; color: var(--t2); margin-bottom: 8px; }
+        .swiggy-item-price { font-weight: 600; color: #fff; }
+        .swiggy-total { display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 700; color: var(--swiggy); font-family: 'Outfit', sans-serif; }
+
+        /* Interactive Action Cards (Pantry/Profile Requests) */
+        .action-card { background: rgba(129, 140, 248, 0.05); border: 1px solid rgba(129, 140, 248, 0.3); border-radius: 16px; padding: 24px; margin-top: 12px; width: 100%; max-width: 500px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        .action-card h3 { font-family: 'Outfit', sans-serif; font-size: 18px; color: #fff; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .action-card p { font-size: 14px; color: var(--t2); margin-bottom: 16px; line-height: 1.5; }
+        .action-input { width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-light); border-radius: 12px; color: #fff; font-family: 'Inter', sans-serif; font-size: 14px; margin-bottom: 16px; transition: border-color 0.2s; }
+        .action-input:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2); }
+        .action-btn { padding: 12px 24px; background: var(--acc-grad); border: none; border-radius: 12px; color: white; font-weight: 600; font-size: 14px; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 12px var(--acc-glow); }
+        .action-btn:hover { transform: translateY(-2px); }
+
         /* Typing indicator */
-        .typing-bar{display:none;align-items:center;gap:10px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:16px;max-width:360px;animation:mi .3s ease-out}
-        .typing-bar.active{display:flex}
-        .typing-dots{display:flex;gap:4px}
-        .typing-dots span{width:6px;height:6px;background:var(--t3);border-radius:50%;animation:db 1.4s infinite}
-        .typing-dots span:nth-child(2){animation-delay:.2s}
-        .typing-dots span:nth-child(3){animation-delay:.4s}
-        @keyframes db{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
-        .typing-label{font-size:13px;color:var(--t3)}
-        .typing-agent{color:var(--acc);font-weight:600}
-        /* Welcome */
-        .welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
-        .welcome-icon{font-size:48px;margin-bottom:16px}
-        .welcome h2{font-size:22px;font-weight:700;margin-bottom:8px}
-        .welcome p{font-size:14px;color:var(--t2);max-width:400px;line-height:1.6;margin-bottom:28px}
-        .quick-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-        .quick-btn{padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
-        .quick-btn:hover{border-color:var(--acc);color:var(--acc);background:var(--accg)}
-        /* Input */
-        .chat-input-bar{padding:16px 28px 24px;border-top:1px solid var(--border)}
-        .input-wrapper{display:flex;gap:12px;align-items:flex-end}
-        .input-field{flex:1;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--t1);font-size:14px;font-family:'Inter',sans-serif;resize:none;outline:none;max-height:120px;transition:border-color .2s}
-        .input-field::placeholder{color:var(--t3)}
-        .input-field:focus{border-color:rgba(99,102,241,0.4)}
-        .send-btn{width:48px;height:48px;flex-shrink:0;background:var(--acc);border:none;border-radius:14px;color:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:0 4px 16px var(--accg)}
-        .send-btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px var(--accg)}
-        .send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
-        @media(max-width:768px){.sidebar{display:none}}
+        .typing-bar { display: none; align-items: center; gap: 12px; padding: 16px 20px; background: var(--bg-glass); border: 1px solid var(--border-light); border-radius: 20px; max-width: 380px; animation: slideUp 0.3s ease-out; backdrop-filter: var(--blur); }
+        .typing-bar.active { display: flex; }
+        .typing-dots { display: flex; gap: 5px; }
+        .typing-dots span { width: 6px; height: 6px; background: var(--acc); border-radius: 50%; animation: pulse 1.4s infinite; }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+        .typing-label { font-size: 14px; color: var(--t2); font-weight: 500; }
+        .typing-agent { color: var(--acc); font-weight: 600; font-family: 'Outfit', sans-serif; }
+
+        /* Input Bar */
+        .chat-input-bar { padding: 24px 32px 32px; background: linear-gradient(to top, var(--bg) 50%, transparent); position: relative; z-index: 10; }
+        .input-wrapper { display: flex; gap: 16px; align-items: flex-end; max-width: 900px; margin: 0 auto; position: relative; }
+        .input-field { flex: 1; padding: 16px 24px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 24px; color: var(--t1); font-size: 15px; font-family: 'Inter', sans-serif; resize: none; outline: none; max-height: 160px; transition: all 0.2s; backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .input-field::placeholder { color: var(--t3); }
+        .input-field:focus { border-color: rgba(129, 140, 248, 0.5); background: rgba(255,255,255,0.08); box-shadow: 0 8px 32px var(--acc-glow); }
+        .send-btn { width: 52px; height: 52px; flex-shrink: 0; background: var(--acc-grad); border: none; border-radius: 20px; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 8px 24px var(--acc-glow); }
+        .send-btn:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 12px 32px var(--acc-glow); }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* Right HUD: Parallel Processes */
+        .agent-hud { width: 320px; flex-shrink: 0; background: var(--bg-glass); backdrop-filter: var(--blur); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px; z-index: 10; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .hud-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .hud-title { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .hud-pulse { width: 8px; height: 8px; background: var(--acc); border-radius: 50%; box-shadow: 0 0 12px var(--acc); animation: pulseHud 2s infinite; }
+        @keyframes pulseHud { 0% { box-shadow: 0 0 0 0 rgba(129, 140, 248, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(129, 140, 248, 0); } 100% { box-shadow: 0 0 0 0 rgba(129, 140, 248, 0); } }
+        
+        .agent-node { background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); border-radius: 16px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 16px; transition: all 0.3s; }
+        .agent-node.active { border-color: rgba(129, 140, 248, 0.5); background: rgba(129, 140, 248, 0.05); transform: translateX(-4px); }
+        .agent-node.done { border-color: rgba(16, 185, 129, 0.3); }
+        
+        .node-icon { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.3s; }
+        .agent-node.active .node-icon { background: var(--acc-grad); box-shadow: 0 4px 12px var(--acc-glow); }
+        .agent-node.done .node-icon { background: rgba(16, 185, 129, 0.1); color: var(--grn); }
+        
+        .node-info { flex: 1; }
+        .node-name { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+        .node-status { font-size: 12px; color: var(--t3); }
+        .agent-node.active .node-status { color: var(--acc); }
+        .agent-node.done .node-status { color: var(--grn); }
+        
+        .node-loader { width: 16px; height: 16px; border: 2px solid rgba(129, 140, 248, 0.2); border-top-color: var(--acc); border-radius: 50%; animation: spin 1s linear infinite; display: none; }
+        .agent-node.active .node-loader { display: block; }
+        .node-check { color: var(--grn); display: none; font-weight: bold; }
+        .agent-node.done .node-check { display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Welcome Screen */
+        .welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .welcome-icon { font-size: 56px; margin-bottom: 20px; filter: drop-shadow(0 8px 16px rgba(129, 140, 248, 0.3)); }
+        .welcome h2 { font-family: 'Outfit', sans-serif; font-size: 32px; font-weight: 700; margin-bottom: 12px; background: var(--acc-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .welcome p { font-size: 15px; color: var(--t2); max-width: 480px; line-height: 1.6; margin-bottom: 32px; }
+        .quick-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+        .quick-btn { padding: 12px 24px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); border-radius: 14px; color: var(--t1); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(10px); }
+        .quick-btn:hover { border-color: var(--acc); background: rgba(129, 140, 248, 0.1); transform: translateY(-2px); box-shadow: 0 4px 16px var(--acc-glow); }
+
+        /* User Card Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 100; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+        .modal-overlay.open { display: flex; opacity: 1; }
+        .modal-content { background: var(--bg-glass); border: 1px solid var(--border-light); border-radius: 24px; width: 100%; max-width: 600px; padding: 32px; box-shadow: 0 24px 64px rgba(0,0,0,0.5); position: relative; transform: translateY(20px); transition: transform 0.3s; }
+        .modal-overlay.open .modal-content { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-title { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 12px; }
+        .modal-close { background: none; border: none; color: var(--t3); font-size: 24px; cursor: pointer; transition: color 0.2s; }
+        .modal-close:hover { color: #fff; }
+        
+        .modal-body p { color: var(--t2); font-size: 14px; margin-bottom: 16px; line-height: 1.5; }
+        .profile-textarea { width: 100%; height: 100px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-light); border-radius: 12px; padding: 16px; color: #fff; font-family: 'Inter', sans-serif; font-size: 14px; resize: none; margin-bottom: 16px; transition: border-color 0.2s; }
+        .profile-textarea:focus { outline: none; border-color: var(--acc); }
+        
+        .btn-autofill { width: 100%; padding: 14px; background: var(--acc-grad); border: none; border-radius: 12px; color: white; font-weight: 600; font-size: 15px; cursor: pointer; transition: transform 0.2s; margin-bottom: 24px; }
+        .btn-autofill:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--acc-glow); }
+        
+        /* Parsed Cards Preview */
+        .parsed-cards { display: none; flex-direction: column; gap: 12px; margin-bottom: 24px; max-height: 300px; overflow-y: auto; padding-right: 8px; }
+        .parsed-cards.active { display: flex; }
+        .parsed-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(129, 140, 248, 0.3); border-radius: 12px; padding: 16px; }
+        .pc-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .pc-name { font-weight: 600; color: #fff; font-size: 15px; }
+        .pc-rel { font-size: 12px; background: rgba(129, 140, 248, 0.2); color: var(--acc); padding: 2px 8px; border-radius: 12px; text-transform: uppercase; }
+        .pc-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .pc-tag { font-size: 12px; padding: 4px 10px; border-radius: 6px; }
+        .pc-tag.diet { background: rgba(16, 185, 129, 0.1); color: var(--grn); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .pc-tag.allergy { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.2); }
+        
+        .modal-footer { display: none; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-light); padding-top: 20px; }
+        .modal-footer.active { display: flex; }
+        .btn-cancel { padding: 12px 24px; background: transparent; border: 1px solid var(--border-light); border-radius: 10px; color: var(--t1); cursor: pointer; }
+        .btn-save { padding: 12px 24px; background: var(--grn); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+
     </style>
 </head>
 <body>
+<div class="bg-blob b1"></div>
+<div class="bg-blob b2"></div>
+
 <aside class="sidebar">
-    <div class="sidebar-logo"><div class="sidebar-logo-icon">🥘</div><span>KitchenOS</span></div>
+    <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">🥘</div>
+        <span>KitchenOS</span>
+    </div>
     <div class="sidebar-section">Navigation</div>
     <a href="/" class="sidebar-item">🏠 Home</a>
-    <a href="/chat" class="sidebar-item active">💬 Chat</a>
-    <div class="sidebar-section" style="margin-top:24px">Quick Commands</div>
+    <a href="/chat" class="sidebar-item active">💬 Chef Chat</a>
+    <button id="btn-setup-profile" class="sidebar-item" style="width:100%; text-align:left; background:rgba(255,255,255,0.05); margin-top:8px;">👨‍👩‍👧 Setup Profile</button>
+    
+    <div class="sidebar-section" style="margin-top: 32px;">Quick Commands</div>
     <div class="sidebar-item quick-cmd" data-cmd="Dinner for the family tonight">🍽️ Family Dinner</div>
     <div class="sidebar-item quick-cmd" data-cmd="What's expiring soon in the pantry?">⏰ Expiring Items</div>
     <div class="sidebar-item quick-cmd" data-cmd="What's the price of milk on Swiggy?">🥛 Price Check</div>
-    <div class="sidebar-item quick-cmd" data-cmd="Show me my family's dietary profiles">👨‍👩‍👧 Profiles</div>
+    
     <div class="sidebar-spacer"></div>
-    <div class="sidebar-status"><span class="status-dot offline" id="status-dot"></span><span id="status-text">Connecting...</span></div>
+    <div class="sidebar-status">
+        <span class="status-dot offline" id="status-dot"></span>
+        <span id="status-text">Connecting...</span>
+    </div>
 </aside>
 
 <main class="chat-main">
     <div class="chat-header">
         <div class="chat-header-left">
             <div class="chat-avatar">👨‍🍳</div>
-            <div class="chat-header-info"><h2>Chef</h2><p id="session-label">Starting session...</p></div>
+            <div class="chat-header-info">
+                <h2>Head Chef</h2>
+                <p id="session-label">Starting session...</p>
+            </div>
         </div>
         <button class="header-btn" id="btn-new-session">+ New Session</button>
     </div>
@@ -99,17 +238,17 @@
     <div class="chat-messages" id="messages">
         <div class="welcome" id="welcome-screen">
             <div class="welcome-icon">👨‍🍳</div>
-            <h2>Welcome to KitchenOS</h2>
-            <p>I'm your Chef. Tell me what you need and I'll coordinate the agents to get it done.</p>
+            <h2>Welcome to your Autonomous Pantry</h2>
+            <p>I orchestrate Diet, Recipe, and Shopper agents. Before we begin, make sure to set up your User Cards so I know your dietary preferences!</p>
             <div class="quick-actions">
-                <button class="quick-btn" data-cmd="Dinner for the family tonight">🍽️ Family Dinner</button>
-                <button class="quick-btn" data-cmd="What's in the pantry?">📦 Pantry Audit</button>
-                <button class="quick-btn" data-cmd="What's the price of milk?">💰 Price Check</button>
+                <button class="quick-btn" id="btn-welcome-profile">⚙️ Setup Profile Card</button>
+                <button class="quick-btn quick-cmd" data-cmd="Dinner for the family tonight">🍽️ Plan Family Dinner</button>
             </div>
         </div>
+        
         <div class="typing-bar" id="typing-bar">
             <div class="typing-dots"><span></span><span></span><span></span></div>
-            <div class="typing-label"><span class="typing-agent" id="typing-agent">Chef</span> is working...</div>
+            <div class="typing-label"><span class="typing-agent" id="typing-agent">Chef</span> is thinking...</div>
         </div>
     </div>
 
@@ -120,6 +259,78 @@
         </div>
     </div>
 </main>
+
+<aside class="agent-hud" id="agent-hud">
+    <div class="hud-header">
+        <div class="hud-title">
+            <div class="hud-pulse"></div>
+            Process HUD
+        </div>
+    </div>
+    
+    <div class="agent-node" id="node-diet">
+        <div class="node-icon">📋</div>
+        <div class="node-info">
+            <div class="node-name">Diet Manager</div>
+            <div class="node-status" id="status-diet">Idle</div>
+        </div>
+        <div class="node-loader"></div>
+        <div class="node-check">✓</div>
+    </div>
+    
+    <div class="agent-node" id="node-recipe">
+        <div class="node-icon">🍳</div>
+        <div class="node-info">
+            <div class="node-name">Recipe Finder</div>
+            <div class="node-status" id="status-recipe">Idle</div>
+        </div>
+        <div class="node-loader"></div>
+        <div class="node-check">✓</div>
+    </div>
+    
+    <div class="agent-node" id="node-shopper">
+        <div class="node-icon">🛒</div>
+        <div class="node-info">
+            <div class="node-name">Shopper</div>
+            <div class="node-status" id="status-shopper">Idle</div>
+        </div>
+        <div class="node-loader"></div>
+        <div class="node-check">✓</div>
+    </div>
+    
+    <div class="agent-node" id="node-budget">
+        <div class="node-icon">💰</div>
+        <div class="node-info">
+            <div class="node-name">Budget Calc</div>
+            <div class="node-status" id="status-budget">Idle</div>
+        </div>
+        <div class="node-loader"></div>
+        <div class="node-check">✓</div>
+    </div>
+</aside>
+
+<!-- User Card Modal -->
+<div class="modal-overlay" id="profile-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title"><span>👨‍👩‍👧</span> Family Profile Cards</div>
+            <button class="modal-close" id="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <p>Tell us about your family. You can mention who is in the family, any specific diets (vegan, keto), or allergies (peanuts, dairy). We'll auto-fill your cards.</p>
+            <textarea id="profile-input" class="profile-textarea" placeholder="E.g. It's me and my wife Priya. I'm vegan and she is allergic to peanuts."></textarea>
+            <button class="btn-autofill" id="btn-autofill">✨ Auto-Fill Cards</button>
+            
+            <div class="parsed-cards" id="parsed-cards-container">
+                <!-- Cards injected here -->
+            </div>
+        </div>
+        <div class="modal-footer" id="modal-footer">
+            <button class="btn-cancel" id="btn-cancel-profile">Cancel</button>
+            <button class="btn-save" id="btn-save-profile">Save to Database</button>
+        </div>
+    </div>
+</div>
 
 <script>
 const messagesEl = document.getElementById('messages');
@@ -135,8 +346,14 @@ const typingAgent = document.getElementById('typing-agent');
 let sessionId = null;
 let isStreaming = false;
 
-// Agent display names
-const AGENT_NAMES = { Chef: 'Chef', Diet: 'Diet', Recipe: 'Recipe', Shopper: 'Shopper', Budget: 'Budget' };
+const nodes = {
+    Diet: { el: document.getElementById('node-diet'), status: document.getElementById('status-diet') },
+    Recipe: { el: document.getElementById('node-recipe'), status: document.getElementById('status-recipe') },
+    Shopper: { el: document.getElementById('node-shopper'), status: document.getElementById('status-shopper') },
+    Budget: { el: document.getElementById('node-budget'), status: document.getElementById('status-budget') }
+};
+
+const AGENT_NAMES = { Chef: 'Head Chef', Diet: 'Diet Manager', Recipe: 'Recipe Finder', Shopper: 'Swiggy Shopper', Budget: 'Budget Calculator' };
 
 async function createSession() {
     try {
@@ -146,33 +363,167 @@ async function createSession() {
         sessionId = data.session_id;
         sessionLabel.textContent = 'Session: ' + sessionId.slice(0, 8) + '…';
         statusDot.className = 'status-dot online';
-        statusText.textContent = 'Connected to ADK';
+        statusText.textContent = 'Connected to Core';
         sendBtn.disabled = false;
     } catch (e) {
         statusDot.className = 'status-dot offline';
-        statusText.textContent = 'ADK offline';
+        statusText.textContent = 'Core Offline';
         sessionLabel.textContent = 'Could not connect';
     }
 }
 
+function resetHud() {
+    for (const key in nodes) {
+        nodes[key].el.className = 'agent-node';
+        nodes[key].status.textContent = 'Pending...';
+    }
+}
+function finishHud() {
+    for (const key in nodes) {
+        if(nodes[key].el.classList.contains('active')) {
+            nodes[key].el.className = 'agent-node done';
+            nodes[key].status.textContent = 'Completed';
+        }
+    }
+}
+
+function updateHudStatus(agentName) {
+    if(nodes[agentName]) {
+        nodes[agentName].el.className = 'agent-node active';
+        nodes[agentName].status.textContent = 'Processing...';
+    }
+}
+
+function renderCards(text) {
+    let html = text;
+    
+    // Parse <recipe> JSON
+    const recipeRegex = /<recipe>([\s\S]*?)<\/recipe>/g;
+    html = html.replace(recipeRegex, (match, jsonStr) => {
+        try {
+            const data = JSON.parse(jsonStr);
+            let ings = (data.ingredients || []).map(i => `<li>${i}</li>`).join('');
+            let missing = data.missing && data.missing.length ? `<div class="recipe-missing"><div class="recipe-missing-title">Missing Ingredients</div><ul class="recipe-ing-list">${data.missing.map(m=>`<li>${m}</li>`).join('')}</ul></div>` : '';
+            return `
+            <div class="card-container">
+                <div class="recipe-card">
+                    ${data.image_url ? `<img src="${data.image_url}" class="recipe-img" alt="Recipe Image">` : `<div class="recipe-img" style="display:flex;align-items:center;justify-content:center;color:#666">No Image</div>`}
+                    <div class="recipe-content">
+                        <div class="recipe-title">${data.title || 'Recipe'}</div>
+                        ${data.time ? `<div class="recipe-meta">⏱️ ${data.time}</div>` : ''}
+                        <ul class="recipe-ing-list">${ings}</ul>
+                        ${missing}
+                    </div>
+                </div>
+            </div>`;
+        } catch(e) { return match; }
+    });
+
+    // Parse <swiggy> JSON
+    const swiggyRegex = /<swiggy>([\s\S]*?)<\/swiggy>/g;
+    html = html.replace(swiggyRegex, (match, jsonStr) => {
+        try {
+            const data = JSON.parse(jsonStr);
+            let items = (data.items || []).map(i => `<li class="swiggy-item"><span>${i.name}</span><span class="swiggy-item-price">₹${i.price}</span></li>`).join('');
+            return `
+            <div class="card-container">
+                <div class="swiggy-card">
+                    <div class="swiggy-header">
+                        <div class="swiggy-logo">S</div>
+                        <div class="swiggy-title">Swiggy Instamart Cart</div>
+                    </div>
+                    <ul class="swiggy-items">${items}</ul>
+                    <div class="swiggy-total"><span>Total</span><span>₹${data.total_price || 0}</span></div>
+                </div>
+            </div>`;
+        } catch(e) { return match; }
+    });
+
+    // Intercept <pantry_request>
+    if(html.includes('<pantry_request>')) {
+        html = html.replace(/<pantry_request>.*?<\/pantry_request>/g, '');
+        html += `
+        <div class="action-card">
+            <h3>📦 Pantry Check Required</h3>
+            <p>The Chef needs to know what items are currently in your pantry to accurately plan the menu and calculate missing items.</p>
+            <input type="text" class="action-input" id="pantry-quick-input" placeholder="E.g. I have rice, 2 onions, and milk">
+            <button class="action-btn" onclick="submitQuickPantry()">Submit Pantry Info</button>
+        </div>`;
+    }
+
+    // Intercept <profile_request>
+    if(html.includes('<profile_request>')) {
+        html = html.replace(/<profile_request>.*?<\/profile_request>/g, '');
+        html += `
+        <div class="action-card">
+            <h3>👨‍👩‍👧 Profile Setup Required</h3>
+            <p>The Chef noticed that your Family Profile Cards (preferences/allergies) are missing or incomplete.</p>
+            <button class="action-btn" onclick="openProfileModal()">Setup Family Cards Now</button>
+        </div>`;
+    }
+
+    return html.trim();
+}
+
+window.submitQuickPantry = async function(btn) {
+    const input = document.getElementById('pantry-quick-input');
+    const val = input.value;
+    if(!val) return;
+    
+    btn.textContent = 'Saving to DB...';
+    btn.disabled = true;
+    input.disabled = true;
+
+    try {
+        await fetch('/api/pantry/parse_and_save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text: val})
+        });
+        
+        // Remove the action card visually
+        const card = btn.closest('.action-card');
+        if (card) {
+            card.innerHTML = '<h3 style="color:#10b981;">✓ Pantry Updated Successfully</h3><p>Your items have been saved to the database.</p>';
+        }
+        
+        // Let the chef know
+        sendMessage("I have updated my pantry. Here is what I added: " + val);
+    } catch(e) {
+        alert('Failed to save pantry: ' + e);
+        btn.textContent = 'Submit Pantry Info';
+        btn.disabled = false;
+        input.disabled = false;
+    }
+}
+
 function addMessage(role, text) {
+    if(!text) return;
     if (welcomeScreen && welcomeScreen.parentNode) welcomeScreen.remove();
     const wrapper = document.createElement('div');
     wrapper.className = 'message ' + role;
+    
+    let formattedText = role === 'assistant' ? renderCards(text) : text;
+    if(!formattedText) return;
+
     const bubble = document.createElement('div');
     bubble.className = 'msg-bubble';
-    bubble.textContent = text;
+    bubble.innerHTML = formattedText; 
+    
     wrapper.appendChild(bubble);
-    // Insert before typing bar
     messagesEl.insertBefore(wrapper, typingBar);
     messagesEl.scrollTop = messagesEl.scrollHeight;
     return bubble;
 }
 
 function showTyping(agent) {
-    typingAgent.textContent = AGENT_NAMES[agent] || agent || 'Chef';
+    typingAgent.textContent = AGENT_NAMES[agent] || agent || 'Head Chef';
     typingBar.classList.add('active');
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    
+    if(agent !== 'Chef') {
+        updateHudStatus(agent);
+    }
 }
 
 function hideTyping() {
@@ -183,6 +534,9 @@ async function sendMessage(text) {
     if (!text.trim() || !sessionId || isStreaming) return;
     isStreaming = true;
     sendBtn.disabled = true;
+
+    const isDinnerCommand = text.toLowerCase().includes('dinner') || text.toLowerCase().includes('plan');
+    if(isDinnerCommand) resetHud();
 
     addMessage('user', text.trim());
     inputEl.value = '';
@@ -200,7 +554,6 @@ async function sendMessage(text) {
         const decoder = new TextDecoder();
         let buffer = '';
 
-        // We collect ALL text parts but only show the LAST agent's final text
         let allParts = [];  // { agent, text }
         let lastSeenAgent = 'Chef';
 
@@ -220,20 +573,34 @@ async function sendMessage(text) {
                     const evt = JSON.parse(jsonStr);
                     const author = evt.author || evt.agent || null;
 
-                    // Update the typing indicator with the current working agent
                     if (author && author !== lastSeenAgent) {
                         lastSeenAgent = author;
                         showTyping(author);
                     }
 
-                    // Collect text parts
                     let textPart = '';
                     if (evt.content && evt.content.parts) {
                         for (const p of evt.content.parts) {
+                            // Skip function calls and function responses entirely
+                            if (p.functionCall || p.functionResponse) continue;
                             if (p.text) textPart += p.text;
                         }
                     }
+
+                    // Skip empty text, raw JSON tool-call artifacts, and transfer_to_agent noise
                     if (textPart && author) {
+                        const trimmed = textPart.trim();
+
+                        // Filter out raw JSON blobs like {"agent_name":"Diet"} or {"items":[...]}
+                        if (trimmed.startsWith('{') && trimmed.endsWith('}')) continue;
+                        if (trimmed.startsWith('[') && trimmed.endsWith(']')) continue;
+
+                        // Filter out transfer_to_agent echoes
+                        if (trimmed.includes('"agent_name"')) continue;
+
+                        // Filter out empty or whitespace-only responses
+                        if (!trimmed) continue;
+
                         allParts.push({ agent: author, text: textPart });
                     }
                 } catch (e) { /* ignore non-JSON */ }
@@ -241,30 +608,35 @@ async function sendMessage(text) {
         }
 
         hideTyping();
+        finishHud();
 
-        // Show only the FINAL response (last text from the root Chef agent, or last text overall)
-        // Strategy: find the last chunk from 'Chef', otherwise use the very last chunk
-        let finalText = '';
-        for (let i = allParts.length - 1; i >= 0; i--) {
-            if (allParts[i].agent === 'Chef') {
-                // Collect all consecutive Chef parts from the end
-                let chefParts = [];
-                for (let j = i; j >= 0 && allParts[j].agent === 'Chef'; j--) {
-                    chefParts.unshift(allParts[j].text);
-                }
-                finalText = chefParts.join('');
-                break;
+        let chefParts = [];
+        let subAgentParts = [];
+        
+        for (const p of allParts) {
+            if (p.agent === 'Chef') {
+                chefParts.push(p.text);
+            } else {
+                subAgentParts.push(p.text);
             }
         }
-        // Fallback: if no Chef response, use the very last part
-        if (!finalText && allParts.length > 0) {
-            finalText = allParts[allParts.length - 1].text;
+        
+        let finalText = chefParts.join('');
+        
+        // Hide the Chef's internal thought process from the UI
+        finalText = finalText.replace(/<thought>[\s\S]*?<\/thought>/gi, '').trim();
+
+        // If Chef produced nothing meaningful, use the LAST sub-agent's output as fallback
+        if (!finalText && subAgentParts.length > 0) {
+            const lastSubAgent = subAgentParts[subAgentParts.length - 1];
+            // Clean up any thought tags in sub-agent output too
+            finalText = lastSubAgent.replace(/<thought>[\s\S]*?<\/thought>/gi, '').trim();
         }
 
         if (finalText) {
             addMessage('assistant', finalText);
-        } else {
-            addMessage('assistant', 'Done. The agents have completed processing.');
+        } else if (allParts.length > 0) {
+            addMessage('assistant', 'I\'m working on it — please try again in a moment.');
         }
 
     } catch (e) {
@@ -280,22 +652,116 @@ async function sendMessage(text) {
 // Events
 sendBtn.addEventListener('click', () => sendMessage(inputEl.value));
 inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(inputEl.value); } });
-inputEl.addEventListener('input', () => { inputEl.style.height = 'auto'; inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px'; });
+inputEl.addEventListener('input', () => { inputEl.style.height = 'auto'; inputEl.style.height = Math.min(inputEl.scrollHeight, 160) + 'px'; });
 
 document.querySelectorAll('.quick-btn, .quick-cmd').forEach(btn => {
     btn.addEventListener('click', () => { if (btn.dataset.cmd) sendMessage(btn.dataset.cmd); });
 });
 
 document.getElementById('btn-new-session').addEventListener('click', () => {
-    // Reset
-    const nodes = messagesEl.querySelectorAll('.message');
-    nodes.forEach(n => n.remove());
+    const nodesEl = messagesEl.querySelectorAll('.message');
+    nodesEl.forEach(n => n.remove());
+    
+    for (const key in nodes) {
+        nodes[key].el.className = 'agent-node';
+        nodes[key].status.textContent = 'Idle';
+    }
+
     const w = document.createElement('div');
     w.className = 'welcome'; w.id = 'welcome-screen';
-    w.innerHTML = '<div class="welcome-icon">👨‍🍳</div><h2>Welcome to KitchenOS</h2><p>I\'m your Chef. Tell me what you need.</p><div class="quick-actions"><button class="quick-btn" data-cmd="Dinner for the family tonight">🍽️ Family Dinner</button><button class="quick-btn" data-cmd="What\'s in the pantry?">📦 Pantry</button><button class="quick-btn" data-cmd="What\'s the price of milk?">💰 Price</button></div>';
+    w.innerHTML = '<div class="welcome-icon">👨‍🍳</div><h2>Welcome to your Autonomous Pantry</h2><p>I orchestrate Diet, Recipe, and Shopper agents. Before we begin, make sure to set up your User Cards!</p><div class="quick-actions"><button class="quick-btn" onclick="openProfileModal()">⚙️ Setup Profile Card</button><button class="quick-btn" onclick="sendMessage(\'Dinner for the family tonight\')">🍽️ Plan Family Dinner</button></div>';
     messagesEl.insertBefore(w, typingBar);
-    w.querySelectorAll('.quick-btn').forEach(b => b.addEventListener('click', () => sendMessage(b.dataset.cmd)));
     createSession();
+});
+
+// Profile Modal Logic
+const modal = document.getElementById('profile-modal');
+const btnAutoFill = document.getElementById('btn-autofill');
+const parsedContainer = document.getElementById('parsed-cards-container');
+const modalFooter = document.getElementById('modal-footer');
+let parsedMembers = [];
+
+window.openProfileModal = function() {
+    modal.classList.add('open');
+};
+document.getElementById('modal-close').addEventListener('click', () => modal.classList.remove('open'));
+document.getElementById('btn-cancel-profile').addEventListener('click', () => modal.classList.remove('open'));
+document.getElementById('btn-setup-profile').addEventListener('click', openProfileModal);
+if(document.getElementById('btn-welcome-profile')) {
+    document.getElementById('btn-welcome-profile').addEventListener('click', openProfileModal);
+}
+
+btnAutoFill.addEventListener('click', async () => {
+    const text = document.getElementById('profile-input').value;
+    if(!text) return;
+    
+    btnAutoFill.textContent = '⏳ Parsing via LLM...';
+    btnAutoFill.disabled = true;
+    
+    try {
+        const res = await fetch('/api/profile/parse', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text})
+        });
+        const data = await res.json();
+        parsedMembers = data.members || [];
+        
+        // Render parsed cards
+        parsedContainer.innerHTML = '';
+        parsedMembers.forEach(m => {
+            let tags = '';
+            (m.diets || []).forEach(d => tags += `<span class="pc-tag diet">${d}</span>`);
+            (m.allergies || []).forEach(a => tags += `<span class="pc-tag allergy">${a}</span>`);
+            
+            parsedContainer.innerHTML += `
+            <div class="parsed-card">
+                <div class="pc-header">
+                    <span class="pc-name">${m.name}</span>
+                    <span class="pc-rel">${m.relationship}</span>
+                </div>
+                <div class="pc-tags">${tags}</div>
+            </div>`;
+        });
+        
+        parsedContainer.classList.add('active');
+        modalFooter.classList.add('active');
+        btnAutoFill.style.display = 'none';
+        
+    } catch(e) {
+        alert('Failed to parse: ' + e);
+        btnAutoFill.textContent = '✨ Auto-Fill Cards';
+        btnAutoFill.disabled = false;
+    }
+});
+
+document.getElementById('btn-save-profile').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-save-profile');
+    btn.textContent = 'Saving...';
+    
+    try {
+        await fetch('/api/profile/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({members: parsedMembers})
+        });
+        modal.classList.remove('open');
+        btn.textContent = 'Save to Database';
+        
+        // Reset modal state
+        btnAutoFill.style.display = 'block';
+        btnAutoFill.textContent = '✨ Auto-Fill Cards';
+        btnAutoFill.disabled = false;
+        parsedContainer.classList.remove('active');
+        modalFooter.classList.remove('active');
+        document.getElementById('profile-input').value = '';
+        
+        addMessage('assistant', '✅ Family profiles successfully updated in the database. I now have the full context for planning!');
+        sendMessage("I have updated my Family Profile in the database. Please continue the exact step you were on without starting over.");
+    } catch(e) {
+        alert('Failed to save.');
+        btn.textContent = 'Save to Database';
+    }
 });
 
 createSession();
